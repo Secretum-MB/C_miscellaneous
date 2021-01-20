@@ -7,26 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
-
-/* The left and right pointers of the nodes at the bottom of the 
- * tree will be NULL and for tree insertion/deletion operations
- * the height of these NULL leaves will be considered to be -1
- * (the height of above nodes will be 0 and increasing going up) */
-typedef struct AVLnode {
-  int key;
-  int height;
-  struct AVLnode *left;
-  struct AVLnode *right;
-  struct AVLnode *parent;
-} AVLnode;
-
-
-/* The tree is implemented as a struct with root property.
- * It can be initialized on the stack or as ptr to the heap. */
-typedef struct AVLtree {
-  struct AVLnode *root;
-} AVLtree;
+#include "../Headers/avlTree.h"
 
 
 
@@ -46,10 +27,7 @@ static int max(int first, int second)
 }
 
 // allocates a new node on the heap with input parameter as key
-// this would probably be made static too as client will want
-// to build their own abstract node type.
-// (for ease of my testing, making this public.)
-AVLnode* allocateNode(int key)
+static AVLnode* allocateNode(int key)
 {
   AVLnode *new_node = malloc(sizeof(*new_node));
   new_node->key = key;
@@ -76,7 +54,7 @@ void AVLtreeFreeNodes(AVLnode *root)
 }
 
 // InOrder traverses and prints to stdout
-void AVLtreeTraversal(AVLnode *root)
+static void AVLtreeTraversal(AVLnode *root)
 {
   if (root != NULL) {
     AVLtreeTraversal(root->left);
@@ -136,7 +114,7 @@ AVLnode* AVLtreeSuccessor(AVLtree *tree, AVLnode *node)
     curr = parent;
     parent = parent->parent;
   }
-  
+
   return parent;
 }
 
@@ -169,7 +147,7 @@ static void rotateLeft(AVLtree *tree, AVLnode *node)
     node->parent->left = R_child;
   else
     node->parent->right = R_child;
-  
+
   R_child->parent = node->parent;
   node->parent = R_child;
 }
@@ -198,13 +176,13 @@ static void rotateRight(AVLtree *tree, AVLnode *node)
 // greater than one. If violated, rotate to correct.
 static void AVLtreeFixup(AVLtree *tree, AVLnode *node)
 {
-  AVLnode *curr = node->parent;  
+  AVLnode *curr = node->parent;
   while (curr != NULL) {
     int left_height  = curr->left  ? curr->left->height  : -1;
     int right_height = curr->right ? curr->right->height : -1;
-    int height_diff  = abs(left_height - right_height); 
+    int height_diff  = abs(left_height - right_height);
     int desired_height = max(left_height, right_height) + 1;
-    
+
     // if node does not need height changed or local rotation, tree is good
     if (curr->height == desired_height && height_diff <= 1)
       return;
@@ -217,7 +195,7 @@ static void AVLtreeFixup(AVLtree *tree, AVLnode *node)
       // right subtree is the taller subtree
       if (right_height > left_height) {
 	int grandchild_left  = curr->right->left  ? curr->right->left->height  : -1;
-	int grandchild_right = curr->right->right ? curr->right->right->height : -1; 
+	int grandchild_right = curr->right->right ? curr->right->right->height : -1;
 
 	// single rotation sufficient when right grandchild is taller or equal to left
 	if (grandchild_right >= grandchild_left) {
@@ -233,14 +211,14 @@ static void AVLtreeFixup(AVLtree *tree, AVLnode *node)
 	  rotateRight(tree, curr->right);
 	  rotateLeft(tree, curr);
 	  curr->height = 1 + max( curr->left  ? curr->left->height  : -1,
-				  curr->right ? curr->right->height : -1);	    
+				  curr->right ? curr->right->height : -1);
 	  curr = curr->parent->parent;
 	}
 
       // left subtree is the taller subtree; mirror above, just flip left/right
       } else {
 	int grandchild_left  = curr->left->left  ? curr->left->left->height  : -1;
-	int grandchild_right = curr->left->right ? curr->left->right->height : -1; 
+	int grandchild_right = curr->left->right ? curr->left->right->height : -1;
 
         // single rotation sufficient when left grandchild is taller or equal to right
 	if (grandchild_left >= grandchild_right) {
@@ -256,8 +234,8 @@ static void AVLtreeFixup(AVLtree *tree, AVLnode *node)
 	  rotateLeft(tree, curr->left);
 	  rotateRight(tree, curr);
 	  curr->height = 1 + max( curr->left  ? curr->left->height  : -1,
-				  curr->right ? curr->right->height : -1);	    
-	  curr = curr->parent->parent;	  
+				  curr->right ? curr->right->height : -1);
+	  curr = curr->parent->parent;
 	}
       }
     } else { curr = curr->parent; }  // executes when curr does not require correction
@@ -271,7 +249,7 @@ void AVLtreeInsert(AVLtree *tree, AVLnode *node)
 {
   AVLnode *parent = NULL;
   AVLnode *curr = tree->root;
-  
+
   while (curr != NULL) {
     parent = curr;
 
@@ -287,7 +265,7 @@ void AVLtreeInsert(AVLtree *tree, AVLnode *node)
   else if (node->key < parent->key)
     parent->left = node;
   else
-    parent->right = node;  
+    parent->right = node;
 
   AVLtreeFixup(tree, node);
 }
@@ -312,7 +290,7 @@ static void transplant(AVLtree *tree, AVLnode *to_replace, AVLnode *by)
 /* Deletes given node from the AVL tree
  * @param tree: AVL tree from which to delete
  * @param node: node to delete from tree
- * @return NULL if no delete, otherwise pointer to node */
+ * @return returns a pointer to the node that was deleted */
 AVLnode* AVLtreeDelete(AVLtree *tree, AVLnode *node)
 {
   // delete node has 0 or 1 children
@@ -353,12 +331,5 @@ AVLnode* AVLtreeDelete(AVLtree *tree, AVLnode *node)
       return node;
     }
   }
-}
-
-
-
-int main(void)
-{
-  return EXIT_SUCCESS;
 }
 
