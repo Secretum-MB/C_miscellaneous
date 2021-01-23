@@ -28,13 +28,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_SIZE 1000
+// want this to be approximately the number of elements in table
+// if too small, alpha is no longer constant, and operations not O(1).
+// one tactic is to begin small (some power of 2, i.e. 8) and grow/shrink.
+// Grow by Table Doubling (to reduce number of such doublings neccessary).
+// (keep track of n, number of elements in table.)
+// Growing is slow as you create new, rehash all elements into new table.
+// But we think of the cost as amortized accros all operations of table, so
+// we still achieve O(1) accross the use of the table.
+//
+// RE: shrinking: deletions shrink table to MAX_SIZE/2 whenever a deletion 
+// identifies that n = MAX_SIZE/4
+#define MAX_SIZE 100
 
 
 typedef enum bool {false, true} bool;
 
 
-/* djb2 has algorithm by Dan Bernstein */
+/* djb2 hash algorithm by Dan Bernstein */
 //
 unsigned long hash(unsigned char *str) {
 

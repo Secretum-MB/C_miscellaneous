@@ -1,7 +1,23 @@
 /*
  * AVL Tree - self balancing binary search Tree
  *
-*/
+ * All operations on tree: insert, delete, min, max, predecessor, successor, search
+ * take O(lg n) time as the tree is balanced.
+ * The tree has only one invariant in addition to the binary search tree invariant,
+ * that being that a node's left and righ subtree may not have a height difference
+ * greater than 1. This means that these trees are very strictly balanced.
+ *
+ * Benefits: provides very fast lookup times. Used often in database implementations.
+ * Costs: strict balancing requires a great number of rotations during insertion/deletion.
+ *
+ * Each node stores in addition to a key, pointer to parent, left/right children, an
+ * integer value for its height in the tree. Nodes at the bottom have a height of 0.
+ * Height inreases via the parents. Insertions/deletions may mutate heights of nearby nodes.
+ *
+ * Comparing to Red-Black trees:
+ * AVL provide faster lookups as better balanced; however, slower insertions/deletions.
+ * Red-Black trees are often used in language librarires (like C++); and AVL in databases.
+ */
 
 
 #include <stdio.h>
@@ -332,4 +348,3 @@ AVLnode* AVLtreeDelete(AVLtree *tree, AVLnode *node)
     }
   }
 }
-
