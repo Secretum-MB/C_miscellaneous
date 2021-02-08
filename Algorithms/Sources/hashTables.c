@@ -396,7 +396,6 @@ void printHashTable(hashTable *table)
 
 
 
-
 /* Functions below demonstrate the various interface for the Hash Table */
 
 static void sample_usage_of_hash_table_no_nodes()

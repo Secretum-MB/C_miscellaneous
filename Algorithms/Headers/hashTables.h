@@ -26,6 +26,33 @@ typedef struct nodeHashTable {
 } nodeHashTable;
 
 
+/* initializes on the Heap a node with a string key. */
+nodeHashTable* nodeHashTable_string(u_char *key, int value)
+{
+  nodeHashTable *new = (nodeHashTable *)malloc(sizeof(*new));
+  if (new == NULL) {
+    perror("malloc");
+    fprintf(stderr, "failed to allocate memory");
+    exit(EXIT_FAILURE);
+  }
+
+  new->key = (u_char *)malloc(sizeof(*key) * strlen(key));
+  if (new->key == NULL) {
+    perror("malloc");
+    fprintf(stderr, "failed to allocate memory");
+    exit(EXIT_FAILURE);
+  }
+
+  new->key_int = 0;
+  new->key_double = 0.0;
+  new->value = value;
+  new->next = new->prev = NULL;
+  memcpy(new->key, key, sizeof(*key) * strlen(key));
+
+  return new;
+}
+
+
 /* Create a new, empty, hash table.
  * @return returns a pointer to the hash table on the heap
  */
@@ -116,36 +143,6 @@ void hashTableDeleteNode(hashTable **table, nodeHashTable *node);
  *          than strings. These functions allocate nodes on the heap
  *          and set the node's key property suitable for hashing.
  */
-
-/*                 STRINGS                        */
-/*           Not a bridging function as node can
-/*           be instantiated directly.
-
-/* initializes on the Heap a node with an string key. */
-nodeHashTable* nodeHashTable_string(u_char *key, int value)
-{
-  nodeHashTable *new = (nodeHashTable *)malloc(sizeof(*new));
-  if (new == NULL) {
-    perror("malloc");
-    fprintf(stderr, "failed to allocate memory");
-    exit(EXIT_FAILURE);
-  }
-
-  new->key = (u_char *)malloc(sizeof(*key) * strlen(key));
-  if (new->key == NULL) {
-    perror("malloc");
-    fprintf(stderr, "failed to allocate memory");
-    exit(EXIT_FAILURE);
-  }
-
-  new->key_int = 0;
-  new->key_double = 0.0;
-  new->value = value;
-  new->next = new->prev = NULL;
-  memcpy(new->key, key, sizeof(*key) * strlen(key));
-
-  return new;
-}
 
 /*                 INTEGERS                       */
 
