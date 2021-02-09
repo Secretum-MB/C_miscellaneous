@@ -17,17 +17,18 @@ typedef struct hashTable hashTable;
  * hash table functions, see bottom of file.
  */
 typedef struct nodeHashTable {
-  u_char *key;
-  int     key_int;
-  double  key_double;
-  int     value;
+  char  *key;
+  int    key_int;
+  double key_double;
+  int    value;
   struct nodeHashTable *next;
   struct nodeHashTable *prev;
 } nodeHashTable;
 
 
 /* initializes on the Heap a node with a string key. */
-nodeHashTable* nodeHashTable_string(u_char *key, int value)
+static
+nodeHashTable* nodeHashTable_string(char *key, int value)
 {
   nodeHashTable *new = (nodeHashTable *)malloc(sizeof(*new));
   if (new == NULL) {
@@ -36,7 +37,7 @@ nodeHashTable* nodeHashTable_string(u_char *key, int value)
     exit(EXIT_FAILURE);
   }
 
-  new->key = (u_char *)malloc(sizeof(*key) * strlen(key));
+  new->key = (char*)malloc(sizeof(*key) * strlen(key));
   if (new->key == NULL) {
     perror("malloc");
     fprintf(stderr, "failed to allocate memory");
@@ -87,21 +88,21 @@ void printHashTable(hashTable *table);
  * @param value the value of the element to insert
  * @NOTE if key already exists in table it is overwritten
  */
-void hashTableInsert(hashTable **table, u_char *key, int value);
+void hashTableInsert(hashTable **table, char *key, int value);
 
 /* Hash table basic search for membership.
  * @param table pointer to the hash table
  * @param key the key of the element to find
  * @return pointer to the found node or NULL.
  */
-nodeHashTable* hashTableSearch(hashTable *table, u_char *key);
+nodeHashTable* hashTableSearch(hashTable *table, char *key);
 
 /* Hash table basic delete
  * @param table the address of the pointer to the hash table
  * @param key the key of the element to delete
  * @return returns 1 if delete was made, otherwise 0
  */
-int hashTableDelete(hashTable **table, u_char *key);
+int hashTableDelete(hashTable **table, char *key);
 
 
 /*              Functions for working with nodes
@@ -128,7 +129,7 @@ nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node);
  * @return pointer to the found node or NULL.
  */
 nodeHashTable* hashTableSearchNode(hashTable *table, void* key,
-				   u_char* (*keyConvert)(void* key));
+				   char* (*keyConvert)(void* key));
 
 /* Hash table delete - does not free the deleted node from memory
  * @param table the address of the pointer to the hash table
@@ -150,15 +151,17 @@ void hashTableDeleteNode(hashTable **table, nodeHashTable *node);
  * @param key alternative key utilized by node / hashtable
  * @return pointer to array containing the hashable key
  */
-u_char* keyConvertFromInt(void* key)
+static
+char* keyConvertFromInt(void* key)
 {
   int key_size_needed = snprintf(NULL, 0, "%d", *(int*)key) + 1;
-  u_char *hashable_key = (u_char *)malloc(key_size_needed);
+  char *hashable_key = (char*)malloc(key_size_needed);
   snprintf(hashable_key, key_size_needed, "%d", *(int*)key);
   return hashable_key;
 }
 
 /* initializes on the Heap a node with an integer key. */
+static
 nodeHashTable* nodeHashTable_int(int key, int value)
 {
   nodeHashTable *new = (nodeHashTable *)malloc(sizeof(*new));
@@ -169,7 +172,7 @@ nodeHashTable* nodeHashTable_int(int key, int value)
   }
 
   int key_size_needed = snprintf(NULL, 0, "%d", key) + 1;
-  new->key = (u_char *)malloc(key_size_needed);
+  new->key = (char*)malloc(key_size_needed);
   if (new->key == NULL) {
     perror("malloc");
     fprintf(stderr, "failed to allocate memory");
@@ -181,7 +184,7 @@ nodeHashTable* nodeHashTable_int(int key, int value)
   new->value = value;
   new->next = new->prev = NULL;
 
-  u_char *hashable_key = keyConvertFromInt(&key);
+  char *hashable_key = keyConvertFromInt(&key);
   memcpy(new->key, hashable_key, key_size_needed);
 
   free(hashable_key);
@@ -194,15 +197,17 @@ nodeHashTable* nodeHashTable_int(int key, int value)
  * @param key alternative key utilized by node / hashtable
  * @return pointer to array containing the hashable key
  */
-u_char* keyConvertFromDouble(void* key)
+static
+char* keyConvertFromDouble(void* key)
 {
   int key_size_needed = snprintf(NULL, 0, "%.8f", *(double*)key) + 1;
-  u_char *hashable_key = (u_char *)malloc(key_size_needed);
+  char *hashable_key = (char*)malloc(key_size_needed);
   snprintf(hashable_key, key_size_needed, "%.8f", *(double*)key);
   return hashable_key;
 }
 
 /* initializes on the Heap a node with an double key. */
+static
 nodeHashTable* nodeHashTable_double(double key, int value)
 {
   nodeHashTable *new = (nodeHashTable *)malloc(sizeof(*new));
@@ -213,7 +218,7 @@ nodeHashTable* nodeHashTable_double(double key, int value)
   }
 
   int key_size_needed = snprintf(NULL, 0, "%.8f", key) + 1;
-  new->key = (u_char *)malloc(key_size_needed);
+  new->key = (char*)malloc(key_size_needed);
   if (new->key == NULL) {
     perror("malloc");
     fprintf(stderr, "failed to allocate memory");
@@ -225,7 +230,7 @@ nodeHashTable* nodeHashTable_double(double key, int value)
   new->value = value;
   new->next = new->prev = NULL;
 
-  u_char *hashable_key = keyConvertFromDouble(&key);
+  char *hashable_key = keyConvertFromDouble(&key);
   memcpy(new->key, hashable_key, key_size_needed);
 
   free(hashable_key);

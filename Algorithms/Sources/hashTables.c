@@ -25,7 +25,6 @@
 */
 
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,7 +41,8 @@ struct hashTable {
 
 
 /* djb2 hash algorithm by Dan Bernstein */
-static unsigned long hash(unsigned char *str)
+static
+unsigned long hash(char *str)
 {
   unsigned long hash = 5381;
   int c;
@@ -138,7 +138,7 @@ hashTable* hashTableBuild()
 /* Basic insert function mimics modern language usability.
  * Provide it with a table and an string, int for key, value.
  */
-void hashTableInsert(hashTable **table, u_char *key, int value)
+void hashTableInsert(hashTable **table, char *key, int value)
 {
   nodeHashTable *new = malloc(sizeof(*new));
   new->key = malloc(sizeof(*key) * strlen(key));
@@ -197,7 +197,7 @@ void hashTableInsert(hashTable **table, u_char *key, int value)
 }
 
 
-nodeHashTable* hashTableSearch(hashTable *table, u_char *key)
+nodeHashTable* hashTableSearch(hashTable *table, char *key)
 {
   unsigned long hash_value = hash(key);
   unsigned int hash_pos = hash_value % table->tableSize;
@@ -217,7 +217,7 @@ nodeHashTable* hashTableSearch(hashTable *table, u_char *key)
 }
 
 
-int hashTableDelete(hashTable **table, u_char *key)
+int hashTableDelete(hashTable **table, char *key)
 {
   unsigned long hash_value = hash(key);
   unsigned int hash_pos = hash_value % (*table)->tableSize;
@@ -301,13 +301,13 @@ nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node)
 
 
 nodeHashTable* hashTableSearchNode(hashTable *table, void* key,
-				   u_char* (*keyConvert)(void*))
+				   char* (*keyConvert)(void*))
 {
-  u_char *hashable_key;
+  char *hashable_key;
   if (keyConvert != NULL) {           // node with alternate key type
     hashable_key = keyConvert(key);
   } else {                            // nodes instantiated with string key
-    hashable_key = (u_char*)key;
+    hashable_key = (char*)key;
   }
   unsigned long hash_value = hash(hashable_key);
   unsigned int hash_pos = hash_value % table->tableSize;
@@ -391,65 +391,5 @@ void printHashTable(hashTable *table)
       printf("\n");
     } else { printf("\\\n"); }
   }
-}
-
-
-
-
-/* Functions below demonstrate the various interface for the Hash Table */
-
-static void sample_usage_of_hash_table_no_nodes()
-{
-  hashTable *table_two = hashTableBuild();
-
-  hashTableInsert(&table_two, "Fish", 9);
-  hashTableInsert(&table_two, "Tacos", 3);
-  hashTableInsert(&table_two, "Burritos", 1);
-  hashTableInsert(&table_two, "Strawberries", 3);
-  hashTableInsert(&table_two, "Fish", 99);         // overwrites original Fish
-  hashTableInsert(&table_two, "Tomatoes", 0);
-  hashTableInsert(&table_two, "Grapes", -1);
-  hashTableInsert(&table_two, "Pears", 2);
-  hashTableInsert(&table_two, "Fish", 7);          // overwrites Fish again
-  hashTableInsert(&table_two, "Pork", 4);
-  hashTableInsert(&table_two, "Chicken", 12);
-
-  printHashTable(table_two);
-  printf("\n");
-
-  printf("find Fish:  %p \n", hashTableSearch(table_two, "Fish"));
-  printf("find Pork:  %p \n", hashTableSearch(table_two, "Pork"));
-  printf("find Toads: %p \n", hashTableSearch(table_two, "Toads"));
-  printf("find FISH:  %p \n", hashTableSearch(table_two, "FISH"));
-  printf("\n");
-
-  printf("deleting Fish:  %d \n", hashTableDelete(&table_two, "Fish"));
-  printf("deleting Pork:  %d \n", hashTableDelete(&table_two, "Pork"));
-  printf("deleting Toads: %d \n", hashTableDelete(&table_two, "Toads"));
-  printf("deleting Fish:  %d \n", hashTableDelete(&table_two, "Fish"));
-  printf("\n");
-
-  printHashTable(table_two);
-  hashTableFree(table_two);
-}
-
-
-static void sample_usage_of_hash_table_with_nodes()
-{
-  hashTable *table = hashTableBuild();
-
-  for (int i = 0; i < 25; i++) {
-    hashTableInsertNode(&table, nodeHashTable_int(i, i*2+3-15));
-  }
-  printHashTable(table);
-
-  for (int i = 0; i < 17; i++) {
-    nodeHashTable *to_delete = hashTableSearchNode(table, &i, keyConvertFromInt);
-    hashTableDeleteNode(&table, to_delete);
-    hashTableFreeNode(to_delete);
-  }
-  printHashTable(table);
-
-  hashTableFree(table);
 }
 

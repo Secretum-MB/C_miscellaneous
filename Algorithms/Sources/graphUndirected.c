@@ -12,12 +12,18 @@
  (Facebook uses undirected graph to represent "friendship" (if A is friends with B, then B is
  also friends with A)).
 
+ MultiGraphs - Vertices may have multiple edges connecting them to another vertex. That is, vertex
+  A may have multiple edges connecting it to vertex B.
+
+ PseudoGraphs - MultiGraphs that allow vertices to have edges to themselves. Each such edge counts
+  as one edge but add two to the vertex's degree (see below) (assuming undirected graph).
+
  Connected components: set of components (vertices) in which any component can reach any other
   component. In other words, all vertices that can reach each other via edges are part of a
   connected component. A connected graph is one where every vertex is in a connected component.
 
  Degree:
-  Undirected graph: degree is the number of vertices that a vertex can call its neighbor.
+  Undirected graph: degree is the number of edges connected to the vertex.
   Directed   graph: indeg(v) = number of edges that are entering vertex v.
                     outdeg(v) = number of edges that are leaving vertex v.
 
@@ -73,6 +79,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "../Headers/graphUndirected.h"
 
@@ -86,32 +93,38 @@ typedef struct adjacencyListNode_t {
 struct graphUndAdj_t {
   unsigned int numVertex;
   unsigned int listSize;
+  bool multiGraph;
+  bool pseudoGraph;
   vertexUndNode *vertex_head;
   adjacencyListNode_t* list[];
 };
 
 
 static
-graphUndAdj_t* graphUndAdj_init(size_t arr_size, size_t num_vertex, vertexUndNode *vertex_head)
+graphUndAdj_t* graphUndAdj_init(size_t arr_size, size_t num_vertex, vertexUndNode *vertex_head,
+				bool multiGraph, bool pseudoGraph)
 {
-  graphUndAdj_t *new = (graphUndAdj_t*)malloc(sizeof(*new) + sizeof(vertexUndNode*) * arr_size);
+  graphUndAdj_t *new = (graphUndAdj_t*)malloc(sizeof(*new) + sizeof(adjacencyListNode_t*) * arr_size);
   if (!new) {
-    perror("malloc");
-    fprintf(stderr, "failed to allocate memory");
-    exit(EXIT_FAILURE);
+    perror("malloc");  fprintf(stderr, "failed to allocate memory\n");  exit(EXIT_FAILURE);
   }
   new->numVertex = num_vertex;
   new->listSize = arr_size;
+  new->multiGraph = multiGraph;
+  new->pseudoGraph = pseudoGraph;
   new->vertex_head = vertex_head;
-  memset(new->list, 0, sizeof(vertexUndNode*) * arr_size);
+  memset(new->list, 0, sizeof(adjacencyListNode_t*) * arr_size);
 
   return new;
 }
 
 
-graphUndAdj_t* graphUndAdj_Build()
+graphUndAdj_t* graphUndAdj_Build(bool multiGraph, bool pseudoGraph)
 {
-  return graphUndAdj_init(8, 0, NULL);
+  if (!multiGraph && pseudoGraph) {
+    fprintf(stderr, "PseudoGraphs must be MultiGraphs\n");  exit(EXIT_FAILURE);
+  }
+  return graphUndAdj_init(8, 0, NULL, multiGraph, pseudoGraph);
 }
 
 
@@ -128,9 +141,14 @@ int graphUndAdj_AddVertex(graphUndAdj_t **graph, vertexUndNode *vertex)
 
   // Table-Doubling on adjacency list
 
+  unsigned int numVertex = (*graph)->numVertex;
+  vertexUndNode *Ve_head = (*graph)->vertex_head;
+  bool multiGraph        = (*graph)->multiGraph;
+  bool pseudoGraph       = (*graph)->pseudoGraph;
+
   while ((*graph)->listSize <= vertex->id) {
-    graphUndAdj_t *new_graph = graphUndAdj_init( (*graph)->listSize * 2, (*graph)->numVertex, (*graph)->vertex_head);
-    memcpy(new_graph->list, (*graph)->list, (*graph)->listSize * sizeof(vertexUndNode*));
+    graphUndAdj_t *new_graph = graphUndAdj_init( (*graph)->listSize * 2, numVertex, Ve_head, multiGraph, pseudoGraph);
+    memcpy(new_graph->list, (*graph)->list, (*graph)->listSize * sizeof(adjacencyListNode_t*));
     graphUndAdj_t *old = *graph;
     *graph = new_graph;
     free(old);
@@ -141,18 +159,21 @@ int graphUndAdj_AddVertex(graphUndAdj_t **graph, vertexUndNode *vertex)
 
 void graphUndAdj_AddEdge(graphUndAdj_t *graph, vertexUndNode *one, vertexUndNode *two)
 {
-  if (one->id >= graph->listSize || two->id >= graph->listSize) {
-    fprintf(stderr, "Did you forget to first add one or both of these Vertices?");
-    exit(EXIT_FAILURE);
-  }
+  if (!graphUndAdj_ExistVertex(graph, one) || !graphUndAdj_ExistVertex(graph, two)) {
+    fprintf(stderr, "Can't add edge to vertex not in graph\n"); exit(EXIT_FAILURE); }
+
+  if (one == two && !graph->pseudoGraph) {
+    fprintf(stderr, "Only PseudoGraphs may have self-referencing or circular edges\n");
+    exit(EXIT_FAILURE); }
+
+  if (!graph->multiGraph && graphUndAdj_ExistEdge(graph, one, two)) {
+    return; }
 
   // create adjacency list nodes for graph's adjacency list
   adjacencyListNode_t *for_one = (adjacencyListNode_t*)malloc(sizeof(*for_one));
   adjacencyListNode_t *for_two = (adjacencyListNode_t*)malloc(sizeof(*for_two));
   if (!for_one || !for_two) {
-    perror("malloc");
-    fprintf(stderr, "failed to allocate memory");
-    exit(EXIT_FAILURE);
+    perror("malloc");  fprintf(stderr, "failed to allocate memory\n");  exit(EXIT_FAILURE);
   }
 
   for_one->vertex = one;
@@ -211,13 +232,47 @@ void graphUndAdj_RemoveVertex(graphUndAdj_t *graph, vertexUndNode *vertex)
     prev = curr;
     curr = curr->next;
   }
-  if (found_vertex) {           // loop over vertices neighbors, remove edges
+  if (found_vertex) {         // loop over vertices neighbors, remove edges
     u_int adj_slot = vertex->id;
     while (graph->list[adj_slot] != NULL) {
       graphUndAdj_RemoveEdge(graph, vertex, graph->list[adj_slot]->vertex);
     }
-    free(vertex);
   }
+}
+
+
+bool graphUndAdj_ExistVertex(graphUndAdj_t *graph, vertexUndNode *vertex)
+{
+  vertexUndNode *curr = graph->vertex_head;
+  while (curr) {
+    if (curr == vertex) { return true; }
+    curr = curr->next;
+  }
+  return false;
+}
+
+
+bool graphUndAdj_ExistEdge(graphUndAdj_t *graph, vertexUndNode *one, vertexUndNode *two)
+{
+  adjacencyListNode_t *curr = graph->list[one->id];
+  while (curr) {
+    if (curr->vertex == two) { return true; }
+    curr = curr->next;
+  }
+  return false;
+}
+
+
+int graphUndAdj_Degree(graphUndAdj_t *graph, vertexUndNode *vertex)
+{
+  int num_neighbors = 0;
+  adjacencyListNode_t *curr = graph->list[vertex->id];
+
+  while (curr) {
+    num_neighbors++;
+    curr = curr->next;
+  }
+  return num_neighbors;
 }
 
 
@@ -249,7 +304,8 @@ void graphUndAdj_Free(graphUndAdj_t *graph)
 
 void graphUndAdj_Print(graphUndAdj_t *graph)
 {
-  printf("\nnumVertex: %d\tlistSize: %d\n", graph->numVertex, graph->listSize);
+  printf("\nnumVertex: %d\tlistSize: %d\tMultiGraph: %d\tPseudoGraph: %d\n",
+	 graph->numVertex, graph->listSize, graph->multiGraph, graph->pseudoGraph);
 
   adjacencyListNode_t *head;
   for (size_t i = 0; i < graph->listSize; i++) {
@@ -265,47 +321,5 @@ void graphUndAdj_Print(graphUndAdj_t *graph)
       printf("\n");
     }
   }
-}
-
-
-
-
-
-
-int main(void)
-{
-  graphUndAdj_t* graph = graphUndAdj_Build();
-
-  vertexUndNode *node1 = vertexUndNew(1, 42);
-  vertexUndNode *node2 = vertexUndNew(2, 42);
-  vertexUndNode *node3 = vertexUndNew(3, 42);
-  vertexUndNode *node4 = vertexUndNew(4, 42);
-  vertexUndNode *node5 = vertexUndNew(5, 42);
-  vertexUndNode *node6 = vertexUndNew(6, 42);
-  vertexUndNode *node7 = vertexUndNew(7, 42);
-  vertexUndNode *node8 = vertexUndNew(8, 42);
-
-  graphUndAdj_AddVertex(&graph, node1);
-  graphUndAdj_AddVertex(&graph, node2);
-  graphUndAdj_AddVertex(&graph, node3);
-  graphUndAdj_AddVertex(&graph, node4);
-  graphUndAdj_AddVertex(&graph, node5);
-  graphUndAdj_AddVertex(&graph, node6);
-  graphUndAdj_AddVertex(&graph, node7);
-  graphUndAdj_AddVertex(&graph, node8);
-
-  graphUndAdj_AddEdge(graph, node1, node2);
-  graphUndAdj_AddEdge(graph, node2, node3);
-  graphUndAdj_AddEdge(graph, node3, node4);
-  graphUndAdj_AddEdge(graph, node4, node6);
-  graphUndAdj_AddEdge(graph, node4, node5);
-  graphUndAdj_AddEdge(graph, node5, node6);
-  graphUndAdj_AddEdge(graph, node5, node7);
-  graphUndAdj_AddEdge(graph, node6, node8);
-  graphUndAdj_AddEdge(graph, node7, node8);
-  graphUndAdj_Print(graph);
-
-  graphUndAdj_Free(graph);
-  return EXIT_SUCCESS;
 }
 
