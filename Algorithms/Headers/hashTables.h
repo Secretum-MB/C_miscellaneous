@@ -4,6 +4,10 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
 
 struct hashTable;
 typedef struct hashTable hashTable;
