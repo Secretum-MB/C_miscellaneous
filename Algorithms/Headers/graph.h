@@ -22,13 +22,33 @@ typedef struct graph_vertex {
 } graph_vertex;
 
 
+/* This struct represents an edges in the adjacency list.
+ * Contains a pointer to the vertex the edge leads to, and
+ * the weight of the edge (if applicable).
+ * The user is shielded from the need to use this struct,
+ * unless you wish to create new functionality which needs
+ * to traverse the adjacency list.
+ */
+typedef struct adjacencyListNode_t {
+  graph_vertex *vertex;
+  double        weight;
+  struct adjacencyListNode_t *next;
+} adjacencyListNode_t;
+
+
 /* This struct represents the graph.
  * Maintains the needed properties to manage memory
- * allocation. The user is shielded from its use by
- * the implementation.
+ * allocation.
  */
-struct graph_t;
-typedef struct graph_t graph_t;
+typedef struct graph_t {
+  unsigned int  numVertex;
+  unsigned int  listSize;
+  bool          multiGraph;
+  bool          pseudoGraph;
+  bool          weighted;
+  graph_vertex* vertex_head;
+  adjacencyListNode_t* list[];
+} graph_t;
 
 
 /* Sample function to instantiate a vertex for the graph

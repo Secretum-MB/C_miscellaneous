@@ -94,25 +94,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "../Headers/graph.h"
-
-
-typedef struct adjacencyListNode_t {
-  graph_vertex *vertex;
-  double        weight;
-  struct adjacencyListNode_t *next;
-} adjacencyListNode_t;
-
-
-struct graph_t {
-  unsigned int  numVertex;
-  unsigned int  listSize;
-  bool          multiGraph;
-  bool          pseudoGraph;
-  bool          weighted;
-  graph_vertex* vertex_head;
-  adjacencyListNode_t* list[];
-};
+#include "../../Headers/graph.h"
 
 
 static

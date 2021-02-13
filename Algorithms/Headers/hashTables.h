@@ -131,9 +131,10 @@ nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node);
  *   @NOTE expects array to be on heap, hashTableSearchNode will free memory
  *   @NOTE for nodes with string key, keyConvert should be NULL
  * @return pointer to the found node or NULL.
+ * @NOTE when calling this function, do not give keyConvert an argument
  */
 nodeHashTable* hashTableSearchNode(hashTable *table, void* key,
-				   char* (*keyConvert)(void* key));
+				   char* (*keyConvert)(void*));
 
 /* Hash table delete - does not free the deleted node from memory
  * @param table the address of the pointer to the hash table
