@@ -1,7 +1,8 @@
 /*  GRAPHS
 
  -various types and their representation
- -this file implements an undirected graph, utilizing Adjacency Lists
+ -this file implements, using adjacency lists, graphs that are directed/undirected, weighted/unweighted,
+  standard/Multigraphs, and Pseudographs.
 
  Graphs are trees with loops. Nodes, called vertices, can connect to any number of other vertices.
  Unlike trees, there is no natural root nor any natural end to graphs, you can loop infinately.

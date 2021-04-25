@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "Graphs/hashTables.h"
+
 
 /* Feel free to modify this struct here as you please.
  * Leave alone the id property as it is used by the graph.
@@ -97,7 +99,23 @@ bool graphExistsEdge     (graph_t*, graph_vertex*, graph_vertex*);
 int  graphVertexDegreeU  (graph_t*, graph_vertex*);
 int  graphVertexDegreeOut(graph_t*, graph_vertex*);
 int  graphVertexDegreeIn (graph_t*, graph_vertex*);
+bool vertexReachable     (graph_t*, graph_vertex*, graph_vertex*);
 
+/*            Traversal           */
+hashTable* breadthFirstSearch(graph_t*, graph_vertex*);
+void graphShortestPathEnum   (hashTable*, int);
+void breadthFirstApply       (graph_t*, graph_vertex*,
+                              void (*apply)(graph_vertex*, int, void*), void*);
+  // example functions to use in place of apply():
+  void printVertex     (graph_vertex*, int, void*);
+  void scaleVertexValue(graph_vertex*, int, void*);
+
+hashTable*    depthFirstSearch(graph_t*);
+graph_vertex* topologicalSort (graph_t*);
+int  graphExistsCycle         (graph_t*);
+void graphCycleEnum           (graph_t*);
+
+/*            Miscellaneous       */
 void graphFree (graph_t*);
 void graphPrint(graph_t*);
 
@@ -274,6 +292,99 @@ int graphVertexDegreeOut(graph_t*, graph_vertex*);
 int graphVertexDegreeIn(graph_t*, graph_vertex*);
 
 
+/* Test whether one vertex is reachable from another
+ * @param the graph where the vertices are members
+ * @param the vertex that is the source in your query
+ * @param the vertex whose reachability you're inquiring about
+ * @return true if second vertex reachable from first, otherwise false
+ */
+bool vertexReachable(graph_t*, graph_vertex*, graph_vertex*);
+
+
+/* Traverse a graph, visiting all vertices reachable from input vertex
+ * @param the graph to be traversed
+ * @param the vertex from which to begin the BFS traversal
+ * @return a hash table to be used with graphShortestPathEnum to find the shortest
+ *   path between this function's input vertex and any other that is reachable
+ * NOTE: the returned hash table can be accessed directly - the keys are the
+ *   reachable vertices and the values their depth from the BFS origin or root.
+ * CAUTION: if accessing the hash table directly: trying to find the depth of
+ *   vertices that are not reachable will cause crash - use vertexReachable first.
+ */
+hashTable* breadthFirstSearch(graph_t*, graph_vertex*);
+
+
+/* Print to STDOUT the shortest path, via vertex id, between two vertices
+ * @param the hash table that is returned from a breadthFirstSearch
+ * @param the integer id of the destination vertex
+ */
+void graphShortestPathEnum(hashTable*, int);
+
+
+/* Perform a BFS traversal of the graph, calling apply on each visited vertex
+ * @param the vertex from which to begin the BFS traversal
+ * @param apply function that will be called on each visited vertex
+ *   @param the vertex that is currently being visited
+ *   @param the dept of the current vertex from the source vertex
+ *   @param optional argument the apply function can use. Use NULL if undesired
+ *   NOTE: do not give apply arguments when calling breadthFirstApply, they are
+ *     provided by the graph and breadthFirstApply (see below).
+ * @param this argument takes the place of the last argument in apply. use Null
+ *   if undesired
+ */
+void breadthFirstApply(graph_t*, graph_vertex*, void (*apply)(graph_vertex*, int, void*), void*);
+
+
+/* Here are two functions that may be used in the place of apply (see above)
+ * NOTE: do not provide these functions with arguments
+ */
+
+  /* Prints to STDOUT information about the visited vertex
+   * NOTE: provide breadhFirstApply with NULL as its final argument
+   */
+  void printVertex(graph_vertex*, int, void*);
+
+  /* Multiplies each visited vertex's value property by scalar (see below)
+   * NOTE: provide breadhFirstApply with the address of an int variable
+   */
+  void scaleVertexValue(graph_vertex*, int, void*);
+
+
+/* Traverses graph via depth-first approach, DFS. Starts at arbitrary vertex.
+ * @param the graph to be traversed
+ * @return a DFS forest of the graph. Hash table's values are the parents of 
+ *  the tree edge leading to the keys. Value of -1 indicates forest entry point.
+ */
+hashTable* depthFirstSearch(graph_t*);
+
+
+/* Determine the number of cycles that exist in a given graph
+ * @param the graph to search for cycles
+ * @return number of cycles; 0 if none, and so on.
+ */
+int graphExistsCycle(graph_t*);
+
+
+/* print to STDOUT the vertices that make up each cycle in given graph.
+ * @param the graph in which to identify cycles
+ */
+void graphCycleEnum(graph_t*);
+
+
+/* Perform a topological sort on an directed acyclic graph (DAG)
+ * it is required that your graph is a DAG
+ * The graph itself is not mutated in any way
+ * @param the graph to have the sort performed on
+ * @return a pointer to the head of a linked list. The nodes are graph
+ *  vertices. The list can be navigated with the structure's next attribute.
+ *  The structure's implementation is at the top of this header file.
+ *  The linked list's order adheres to a topologial sort of the graph.
+ * @NOTE: it is the responsibility of the caller to free the memory allocated
+ *        to the linked list that is returned.
+ */
+graph_vertex* topologicalSort(graph_t*);
+
+
 /* Frees the memory allocated to the graph and all member vertices
  * @param the graph to be freed.
  */
@@ -288,4 +399,3 @@ void graphPrint(graph_t*);
 
 
 #endif
-
