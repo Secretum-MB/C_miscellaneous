@@ -33,7 +33,14 @@
 
  Complete graph: graph in which every vertex has edge to every other vertex.
 
- Directed Acylic graph: a directed graph that does not contain any cycle.
+ Directed Acylic graph: a directed graph that does not contain any cycles.
+
+ Transposing Graphs: the transpose of graph G is G^T and G^T = (V,E^T).
+   E^T = { (u,v) : (v,u) in E }
+   that is, a transposed graph is another graph with same vertices but with all edges pointing
+   the reverse direction. The transpose of an undirected graph is simply itself.
+   Many graph algorithms use the graph's transpose in their computations.
+
 
  How vertices and edges are represented in code depends on the
  data structure you wish to use to represent the graph. The two most common are:
@@ -124,6 +131,40 @@ graph_t* graphBuild(bool multiGraph, bool pseudoGraph)
     fprintf(stderr, "PseudoGraphs must be MultiGraphs\n");  exit(EXIT_FAILURE);
   }
   return _graph_init(8, 0, NULL, multiGraph, pseudoGraph, false);
+}
+
+
+graph_t* graphBuildTranspose(graph_t *graph)
+{
+  graph_t *transpose = graphBuild(graph->multiGraph, graph->pseudoGraph);
+
+  graph_vertex *curr = graph->vertex_head;
+  while (curr) {
+    graphAddVertex(&transpose, graphVertexNew(curr->id, curr->value));
+    curr = curr->next;
+  }
+
+  // add to new graph the transpose of each edge in adjacency list
+  for (size_t i = 0; i < graph->listSize; i++) {
+    adjacencyListNode_t *edge = graph->list[i];
+    graph_vertex *edge_src = NULL;
+    graph_vertex *edge_dst = NULL;
+    while (edge) {
+
+      // retrieve the source/dest vertix instances from graph's linked list
+      int updated = 0;
+      curr = transpose->vertex_head;
+      while (curr) {
+	if (curr->id == i)                { edge_src = curr; updated++; }
+	if (curr->id == edge->vertex->id) { edge_dst = curr; updated++; }
+	if (updated == 2) break;
+	curr = curr->next;
+      }
+      graphAddEdgeD(transpose, edge_dst, edge_src);
+      edge = edge->next;
+    }
+  }
+  return transpose;
 }
 
 

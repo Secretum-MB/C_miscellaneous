@@ -30,7 +30,7 @@
 
   Useful applications of DFS: cycle detection and Topological sort
 
-  Cycle Detection:
+  Cycle Detection:  O(V + E)
   graph has cycle if and only if DFS finds an backward edge.
   Also, cycle must exist if graph has a backward edge.
   There are multiple ways of implementing cycle detection. A common approach
@@ -47,7 +47,7 @@
   edge, travel back along the tree edges in the DFS-forest until you reach the
   vertix identified as the predecessor vertix by the backward edge.
 
-  Topological Sort:
+  Topological Sort:  O(V + E)
   Topological sort is ran only on directed acyclic graphs (DAGs). A directed
   graph is a DAG if DFS states that is has no back edges. Topological sort
   produces a linear ordering of all vertices in the graph such that if edge (u,v)
@@ -59,6 +59,26 @@
   vertices at the head of a linked list as they are finished.
   Applications include job scheduling (determining ordering of tasks where edges
   represent constraints in regard to the task's precedence).
+
+  Strongly Connected Components (scc) decomposition:  O(V+E)
+  Many graph algorithms require scc as their input. Decomposing a graph into its scc
+  is therefore important. Knowledge of which vertices belong to a scc is valuable for
+  other purposes as well. scc are meaningful for directed graphs.
+  SCC defined: A scc is the maximal set, C, of vertices (in G) such that for every
+  pair of vertices (u,v) in C, we have u->v and v->u. Meaning: all vertices in a scc
+  must be able to reach all other vertices in that scc. A scc can have size of just
+  one vertex.
+  We identify a graph's SCCs by performing two DFS traversals. The first establishes
+  the finishing sequence of each vertex. The second DFS is performed on the transpose
+  of the input graph AND the order in which the DFS function enters into the graph
+  corresponds to the reverse of the finishing times as identified in the first DFS.
+  Each forest produced by the second DFS (on the transpose) is a scc.
+  In my implementation I modified how I use the array mentioned in the above two
+  sections such that at each index (corresponding to a vertex's id) I store its
+  finishing position - 1 if vertex finished first, 5 if it finished fifth, etc.
+  All positions corresponding to vertices not in the graph are defaulted to 0.
+  The second running of DFS than finds the highest value in this array and enters
+  DFS on its vertex. This is continued until all positions have been explored.
 */
 
 
@@ -267,5 +287,88 @@ graph_vertex* topologicalSort(graph_t *graph)
   }
   hashTableFree(parent);
   return sorted_head;
+}
+
+
+/*                                     */
+/*   Strongly Connected Components     */
+/*                                     */
+
+static
+void _DFS_visit_components(graph_t *graph, int parent_id, hashTable **parents, int *progress_array, int *fin_pos, int print_to_STDOUT)
+{
+  adjacencyListNode_t *edge = graph->list[parent_id];
+  while (edge) {
+    if (!hashTableSearchNode( (*parents), &edge->vertex->id, keyConvertFromInt)) {
+      if (print_to_STDOUT) { printf(" %d", edge->vertex->id); }
+      hashTableInsertNode( &(*parents), nodeHashTable_int(edge->vertex->id, parent_id, parent_id));
+      _DFS_visit_components(graph, edge->vertex->id, parents, progress_array, fin_pos, print_to_STDOUT);
+      progress_array[edge->vertex->id] = *fin_pos; *fin_pos += 1;
+    }
+    edge = edge->next;
+  }
+}
+
+
+static
+hashTable* _DFS_SCC(graph_t *graph, int print_to_STDOUT)
+{
+  hashTable *parent = hashTableBuild();
+  int fin_positions[graph->listSize];
+  for (size_t i = 0; i < graph->listSize; i++) { fin_positions[i] = 0; }
+  int fin_pos = 1;
+
+  // DFS of original input graph in order to find order of finishing times
+  graph_vertex *curr = graph->vertex_head;
+  while (curr) {
+    if (!hashTableSearchNode(parent, &curr->id, keyConvertFromInt)) {
+      hashTableInsertNode(&parent, nodeHashTable_int(curr->id, -1, -1));
+      _DFS_visit_components(graph, curr->id, &parent, fin_positions, &fin_pos, 0);
+      fin_positions[curr->id] = fin_pos; fin_pos++;
+    }
+    curr = curr->next;
+  }
+  hashTableFree(parent);
+
+  // DFS of the transpose of input graph
+  graph_t *transpose = graphBuildTranspose(graph);
+  hashTable *parent2 = hashTableBuild();
+  int dummy_array[transpose->listSize];  // need this to avoid mutating the one from above
+  for (size_t i = 0; i < transpose->listSize; i++) { dummy_array[i] = 0; }
+  int remaining_vertices = transpose->numVertex;
+
+  while (remaining_vertices > 0) {
+
+    // loop over array containing knowledge of when vertices finished
+    for (size_t vertex = 0; vertex < transpose->listSize; vertex++) {
+
+      // identify vertex with the latest finish time and run DFS on it
+      if (fin_positions[vertex] == remaining_vertices) {
+	remaining_vertices--;
+	if (!hashTableSearchNode(parent2, &vertex, keyConvertFromInt)) {
+	  if (print_to_STDOUT) { printf("\nStrongly Connected Component: %ld", vertex); }
+	  hashTableInsertNode(&parent2, nodeHashTable_int(vertex, -1, -1));
+	  _DFS_visit_components(transpose, vertex, &parent2, dummy_array, &fin_pos, print_to_STDOUT);
+	  break;
+	}
+      }
+    }
+  }
+  graphFree(transpose);
+  return parent2;
+}
+
+
+void printStronglyConnectedComponents(graph_t *graph)
+{
+  hashTable *scc_forest = _DFS_SCC(graph, 1);
+  hashTableFree(scc_forest);
+}
+
+
+hashTable* stronglyConnectedComponents(graph_t *graph)
+{
+  hashTable *scc_forest = _DFS_SCC(graph, 0);
+  return scc_forest;
 }
 

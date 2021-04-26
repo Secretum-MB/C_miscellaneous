@@ -76,10 +76,11 @@ graph_vertex* graphVertexNew(int id, int value)
 /*            Quick Summary       */
 /*            details below       */
 
-graph_t* graphBuild    (bool, bool);
-int  graphAddVertex    (graph_t**, graph_vertex*);
-void graphRemoveVertexU(graph_t*, graph_vertex*);
-void graphRemoveVertexD(graph_t*, graph_vertex*);
+graph_t* graphBuild         (bool, bool);
+graph_t* graphBuildTranspose(graph_t*);
+int  graphAddVertex     (graph_t**, graph_vertex*);
+void graphRemoveVertexU (graph_t*,  graph_vertex*);
+void graphRemoveVertexD (graph_t*,  graph_vertex*);
 
 /*            Adding Edges        */
 void graphAddEdgeU      (graph_t*, graph_vertex*, graph_vertex*);
@@ -96,10 +97,14 @@ void graphRemoveEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, double);
 /*            Analysis            */
 bool graphExistsVertex   (graph_t*, graph_vertex*);
 bool graphExistsEdge     (graph_t*, graph_vertex*, graph_vertex*);
+int  graphExistsCycle    (graph_t*);
+void graphCycleEnum      (graph_t*);
 int  graphVertexDegreeU  (graph_t*, graph_vertex*);
 int  graphVertexDegreeOut(graph_t*, graph_vertex*);
 int  graphVertexDegreeIn (graph_t*, graph_vertex*);
 bool vertexReachable     (graph_t*, graph_vertex*, graph_vertex*);
+hashTable* stronglyConnectedComponents(graph_t*);
+void printStronglyConnectedComponents (graph_t*);
 
 /*            Traversal           */
 hashTable* breadthFirstSearch(graph_t*, graph_vertex*);
@@ -112,8 +117,6 @@ void breadthFirstApply       (graph_t*, graph_vertex*,
 
 hashTable*    depthFirstSearch(graph_t*);
 graph_vertex* topologicalSort (graph_t*);
-int  graphExistsCycle         (graph_t*);
-void graphCycleEnum           (graph_t*);
 
 /*            Miscellaneous       */
 void graphFree (graph_t*);
@@ -130,6 +133,16 @@ void graphPrint(graph_t*);
  * @NOTE PseudoGraphs must be MultiGraphs
  */
 graph_t* graphBuild(bool, bool);
+
+
+/* Returns a new graph that is the transpose of the input graph.
+ * @param graph that is to be transposed
+ * @NOTE: input graph must be directed graph with un-weighted edges.
+ *   (the transpose of an undirected graph is simply itself)
+ *   (transposing a weighted graph is not supported by this function)
+ * @return a pointer to the transposed graph on the heap
+ */
+graph_t* graphBuildTranspose(graph_t*);
 
 
 /* Add a vertex to the graph
@@ -383,6 +396,21 @@ void graphCycleEnum(graph_t*);
  *        to the linked list that is returned.
  */
 graph_vertex* topologicalSort(graph_t*);
+
+
+/* DFS approach to identifying all strongly connected components (scc) in graph.
+ * @param the graph from which to identify the scc
+ * @return a hash table representing one or more forests. Each forest is a scc.
+ * @NOTE: this is generally only done on directed graphs
+ */
+hashTable* stronglyConnectedComponents(graph_t*);
+
+
+/* Print to STDOUT all strongly connected components (scc) and their vertices
+ * @param the graph fom which to identify the scc
+ * @NOTE: this is generally only done on directed graphs
+ */
+void printStronglyConnectedComponents(graph_t*);
 
 
 /* Frees the memory allocated to the graph and all member vertices
