@@ -20,6 +20,7 @@
 typedef struct graph_vertex {
   unsigned int id;
   int value;
+  int heap_pos;
   struct graph_vertex *next;
 } graph_vertex;
 
@@ -33,7 +34,7 @@ typedef struct graph_vertex {
  */
 typedef struct adjacencyListNode_t {
   graph_vertex *vertex;
-  double        weight;
+  int           weight;
   struct adjacencyListNode_t *next;
 } adjacencyListNode_t;
 
@@ -66,6 +67,7 @@ graph_vertex* graphVertexNew(int id, int value)
   }
   new->id = id;
   new->value = value;
+  new->heap_pos = 0;
   new->next = NULL;
 
   return new;
@@ -85,14 +87,14 @@ void graphRemoveVertexD (graph_t*,  graph_vertex*);
 /*            Adding Edges        */
 void graphAddEdgeU      (graph_t*, graph_vertex*, graph_vertex*);
 void graphAddEdgeD      (graph_t*, graph_vertex*, graph_vertex*);
-void graphAddEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, double);
-void graphAddEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, double);
+void graphAddEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, int);
+void graphAddEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, int);
 
 /*            Removing Edges      */
 void graphRemoveEdgeU      (graph_t*, graph_vertex*, graph_vertex*);
 void graphRemoveEdgeD      (graph_t*, graph_vertex*, graph_vertex*);
-void graphRemoveEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, double);
-void graphRemoveEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, double);
+void graphRemoveEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, int);
+void graphRemoveEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, int);
 
 /*            Analysis            */
 bool graphExistsVertex   (graph_t*, graph_vertex*);
@@ -103,8 +105,14 @@ int  graphVertexDegreeU  (graph_t*, graph_vertex*);
 int  graphVertexDegreeOut(graph_t*, graph_vertex*);
 int  graphVertexDegreeIn (graph_t*, graph_vertex*);
 bool vertexReachable     (graph_t*, graph_vertex*, graph_vertex*);
-hashTable* stronglyConnectedComponents(graph_t*);
-void printStronglyConnectedComponents (graph_t*);
+
+/*            Advanced Analysis   */
+void       printStronglyConnectedComponents (graph_t*);
+hashTable* stronglyConnectedComponents      (graph_t*);
+void       singleSourceShortestPath_print   (hashTable*, int);
+hashTable* singleSourceShortestPath_DAG     (graph_t*, graph_vertex*);
+hashTable* singleSourceShortestPath_dijkstra(graph_t*, graph_vertex*);
+
 
 /*            Traversal           */
 hashTable* breadthFirstSearch(graph_t*, graph_vertex*);
@@ -185,7 +193,7 @@ void graphAddEdgeD(graph_t*, graph_vertex*, graph_vertex*);
  * @NOTE if graph not MultiGraph, redundant edges not added: no effect,
  *       (even if weight provided is different from existing edge).
  */
-void graphAddEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, double);
+void graphAddEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, int);
 
 
 /* Adds an directed, weighted, edge in the graph from vertex one to vertex two.
@@ -197,7 +205,7 @@ void graphAddEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, double);
  * @NOTE if graph not MultiGraph, redundant edges not added: no effect,
  *       (even if weight provided is different from existing edge).
  */
-void graphAddEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, double);
+void graphAddEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, int);
 
 
 /* Removes an existing undirected edge between two vertices from the graph
@@ -227,7 +235,7 @@ void graphRemoveEdgeD(graph_t*, graph_vertex*, graph_vertex*);
  * @NOTE if graph is Simple, weight is ignored and edge is removed if it exists;
  *       Otherwise, edge is only removed if input weight matches edge's weight.
  */
-void graphRemoveEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, double);
+void graphRemoveEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, int);
 
 
 /* Removes an existing directed, weighted, edge from vertex one to two
@@ -239,7 +247,7 @@ void graphRemoveEdgeWeightU(graph_t*, graph_vertex*, graph_vertex*, double);
  * @NOTE if graph is Simple, weight is ignored and edge is removed if it exists;
  *       Otherwise, edge is only removed if input weight matches edge's weight.
  */
-void graphRemoveEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, double);
+void graphRemoveEdgeWeightD(graph_t*, graph_vertex*, graph_vertex*, int);
 
 
 /* Removes vertex and all undirected edges connected to it
@@ -411,6 +419,40 @@ hashTable* stronglyConnectedComponents(graph_t*);
  * @NOTE: this is generally only done on directed graphs
  */
 void printStronglyConnectedComponents(graph_t*);
+
+
+/* Print to STDOUT the vertices along the path between the source, as entered
+ * into a Single-Source Shortest Path algorithm and the destination, given here.
+ * @param the hash table that is returned by one of the Single-Source Shortest
+ *   Path algorithms.
+ * @param the integer id of the destination vertex
+ * @NOTE: Single-Source Shortest Path algorithms are for weighted and directed
+ *   graphs, otherwise, use Breadth-First Search to find shortest paths.
+ */
+void singleSourceShortestPath_print(hashTable*, int);
+
+
+/* Perform a Single-Source Shortest Path analysis on a Directed Acyclic Graph.
+ * @param the graph which to analyze
+ * @param the source vertex that is the single-source of all paths
+ * @return a hash table that contains vertex id as keys, distances as values
+ *   (->value), and vertex predecessors (or parents) in ->graph_predecessor
+ * @NOTE: Single-Source Shortest Path algorithms are for weighted and directed
+ *   graphs, otherwise, use Breadth-First Search to find shortest paths. 
+ */
+hashTable* singleSourceShortestPath_DAG(graph_t*, graph_vertex*);
+
+
+/* Perform a Single-Source Shortest Path analysis on an graph WITHOUT negative
+ * weighted edges. Uses Dijkstra's algorithm with binary heap for priority queue.
+ * @param the graph which to analyze
+ * @param the source vertex that is the single-source of all paths
+ * @return a hash table that contains vertex id as keys, distances as values
+ *   (->value), and vertex predecessors (or parents) in ->graph_predecessor
+ * @NOTE: Single-Source Shortest Path algorithms are for weighted and directed
+ *   graphs, otherwise, use Breadth-First Search to find shortest paths.
+ */
+hashTable* singleSourceShortestPath_dijkstra(graph_t*, graph_vertex*);
 
 
 /* Frees the memory allocated to the graph and all member vertices

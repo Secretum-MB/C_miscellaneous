@@ -254,7 +254,7 @@ void graphAddEdgeD(graph_t *graph, graph_vertex *one, graph_vertex *two)
 }
 
 
-void graphAddEdgeWeightU(graph_t *graph, graph_vertex *one, graph_vertex *two, double weight)
+void graphAddEdgeWeightU(graph_t *graph, graph_vertex *one, graph_vertex *two, int weight)
 {
   if (!graphExistsVertex(graph, one) || !graphExistsVertex(graph, two)) {
     fprintf(stderr, "Can't add edge to vertex not in graph\n"); exit(EXIT_FAILURE); }
@@ -287,7 +287,7 @@ void graphAddEdgeWeightU(graph_t *graph, graph_vertex *one, graph_vertex *two, d
 }
 
 
-void graphAddEdgeWeightD(graph_t *graph, graph_vertex *one, graph_vertex *two, double weight)
+void graphAddEdgeWeightD(graph_t *graph, graph_vertex *one, graph_vertex *two, int weight)
 {
   if (!graphExistsVertex(graph, one) || !graphExistsVertex(graph, two)) {
     fprintf(stderr, "Can't add edge to vertex not in graph\n"); exit(EXIT_FAILURE); }
@@ -360,7 +360,7 @@ void graphRemoveEdgeD(graph_t *graph, graph_vertex *one, graph_vertex *two)
 }
 
 
-void graphRemoveEdgeWeightU(graph_t *graph, graph_vertex *one, graph_vertex *two, double weight)
+void graphRemoveEdgeWeightU(graph_t *graph, graph_vertex *one, graph_vertex *two, int weight)
 {
   adjacencyListNode_t *prev = NULL;    // loop through linked list of node one
   adjacencyListNode_t *curr = graph->list[one->id];
@@ -389,7 +389,7 @@ void graphRemoveEdgeWeightU(graph_t *graph, graph_vertex *one, graph_vertex *two
 }
 
 
-void graphRemoveEdgeWeightD(graph_t *graph, graph_vertex *one, graph_vertex *two, double weight)
+void graphRemoveEdgeWeightD(graph_t *graph, graph_vertex *one, graph_vertex *two, int weight)
 {
   adjacencyListNode_t *prev = NULL;    // loop through linked list of node one
   adjacencyListNode_t *curr = graph->list[one->id];
@@ -587,7 +587,7 @@ void graphPrint(graph_t *graph)
 	}
       } else {                  // graph is weighted
 	while (curr) {
-	  printf("(%d: %.2f)->", curr->vertex->id, curr->weight);
+	  printf("(%d: %d)->", curr->vertex->id, curr->weight);
 	  curr = curr->next;
 	}
       }

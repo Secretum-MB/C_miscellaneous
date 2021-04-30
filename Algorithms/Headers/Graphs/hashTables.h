@@ -118,10 +118,9 @@ int hashTableDelete(hashTable **table, char *key);
 /* Hash table insert
  * @param table the address of the pointer to the hash table
  * @param node the node to be inserted into the hash table
- * @return if node with same key exists, it is overwritten and pointer
- *   to it is returned, so user may free it, if desired. Otherwise, NULL.
+ * @NOTE if node with same key exists, it is overwritten and freed.
  */
-nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node);
+void hashTableInsertNode(hashTable **table, nodeHashTable *node);
 
 /* Hash table search for membership.
  * @param table pointer to the hash table

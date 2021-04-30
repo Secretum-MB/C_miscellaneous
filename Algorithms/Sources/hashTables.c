@@ -253,7 +253,7 @@ int hashTableDelete(hashTable **table, char *key)
 }
 
 
-nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node)
+void hashTableInsertNode(hashTable **table, nodeHashTable *node)
 {
   unsigned long hash_value = hash(node->key);
   unsigned int hash_pos = hash_value % (*table)->tableSize;
@@ -273,7 +273,8 @@ nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node)
 	  if (head->next) { head->next->prev = node; }
 	}
 	node->next = head->next;
-	return head;
+	hashTableFreeNode(head);
+	return;
       }
       prev = head;
       head = head->next;
@@ -296,7 +297,7 @@ nodeHashTable* hashTableInsertNode(hashTable **table, nodeHashTable *node)
   if ( (*table)->numElements == (*table)->tableSize) {
     hashTable_resize(table, (*table)->tableSize * 2);
   }
-  return NULL;
+  return;
 }
 
 
