@@ -351,6 +351,22 @@ void hashTableDeleteNode(hashTable **table, nodeHashTable *node)
 }
 
 
+void hashTableEmpty(hashTable **table)
+{
+  hashTable *empty = hashTableBuild();
+  hashTable *tmp = (*table);
+  (*table) = empty;
+  hashTableFree(tmp);
+}
+
+
+int hashTableIsEmpty(hashTable *table)
+{
+  if (table->numElements == 0) return 1;
+  return 0;
+}
+
+
 /* frees table and all nodes within it */
 void hashTableFree(hashTable *table)
 {
@@ -377,7 +393,7 @@ void hashTableFreeNode(nodeHashTable *node)
 }
 
 
-void printHashTable(hashTable *table)
+void hashTablePrint(hashTable *table)
 {
   printf("tbl_size: %d; num_elements: %d; struct_size: %d\n",
 	 table->tableSize, table->numElements, table->structSize);

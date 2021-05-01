@@ -63,6 +63,16 @@ nodeHashTable* nodeHashTable_string(char *key, int value)
  */
 hashTable* hashTableBuild();
 
+/* Given your hash table, it will empty all its contents.
+ * The table will return to default size.
+ */
+void hashTableEmpty(hashTable **table);
+
+/* Check whether a given hash table is empty.
+ * @return 1 if table is empty, 0 otherwise.
+ */
+int hashTableIsEmpty(hashTable *table);
+
 /* Free all memory allocated for the hash table, including all nodes
  * @NOTE if you wish to preserve the nodes, call free(table) instead
  * @NOTE frees nodes assuming memory was allocated seperately to both key and to struct
@@ -77,7 +87,7 @@ void hashTableFreeNode(nodeHashTable *node);
 /* Prints to stdout a textual representation of
  * the hash table and its linked lists
  */
-void printHashTable(hashTable *table);
+void hashTablePrint(hashTable *table);
 
 
 /*              Simple functionality

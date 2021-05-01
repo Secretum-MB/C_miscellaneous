@@ -9,6 +9,14 @@
  will often force us to use an algorithm that has a worse asymptotic complexity. Some problems
  may allow you to negate the negative edges without changing the result of the analysis.
 
+ An related problem is finding the longest paths. This can be done by negating the edges and
+ determining the shortest paths, which now correspond to the longest paths. This works great
+ in DAGs (see below). However, what if this negation causes the creation of negative cycles?
+ None of the algorithms below will compute best paths in that case; in fact, no polynomial
+ time algorithms exist for computing the "simple" shortest paths where negative cycles exist.
+ (simple means that no cycles are taken in path). We are left only with exponential solutions.
+ This problem is considered NP-hard (no polynomial solutions believed to exist).
+
  Realize that solving this problem by brute force would require generating all permutations
  of the paths between the source and all destinations and then picking the best one. This
  would be incredibly slow as the number of permutations would be massive.
@@ -41,7 +49,7 @@
  the source vertex. Source here refers to the source of the outgoing edge being relaxed, not
  the single-source of the algorithm.
  The game-plan then for these algorithms is to keep calling this function in such a way as
- to minimize the number of such calls and to have all distances and paths be optimal.
+ to minimize the number of such calls and to have all distances and paths be optimal at end.
 
  DAGs - Directed Acyclic Graphs:  O(V + E)
  The easiest graphs to analyze are DAGs. We can also achieve the best running time on these.
@@ -53,7 +61,7 @@
   minimum time for project completion (or task completion). Find maximal times by negating
   the edges. (Negative edges are okay in DAGs.)
 
- Dijkstra's Algorithm:  O(E lg V)
+ Dijkstra's Algorithm:  O(E lg V)  [slightly better performance possible with fibonacci heap]
  If your directed and weighted graph has cycles, this is likely your fastest algorithm.
  It requires that all your edges have NON-NEGATIVE weights.
  This is a "greedy" algorithm and it requires the use of a priority queue.
@@ -69,9 +77,52 @@
   heapify from the position of the updated vertex. The vertex struct is updated to contain a
   property that carries the vertex's heap position at all times.
 
+ Bellman-Ford:  O(VE)
+ Solves the single-source problem in the general case, where there may be edges with negative
+ weights and negatively weighted cycles.
+ The algorithm has two parts. The first loops over every edge relaxing each. This is done as
+ many times as there are vertices in the graph (minus 1 time). This is the cause of O(VE).
+ If there are no negative cycles in the graph between the source and any of its reachable
+ destinations, this process will find the shortest paths for all destinations. The proof goes
+ like this: imagine a shortest path, v0,v1,v2,...vk. Among the edges we relax in our first
+ pass through every edge is the edge between v0 and v1, which now creates that shortest path.
+ On the second pass over every edge we must relax the edge between v1 and v2 (v1 now having
+ the optimal distance from last pass), we find its opimal distance. After k-1 passes over
+ every edge all edges in the shortest path have been optimized.
+ Part two of the algorithm identifies whether there are any negative cycles effecting any of
+ the destinations identified above. It does it by looping over all the edges one additional
+ time looking for whether a relaxation event could be/or is triggered. If a relaxation event
+ is possible then only a negative cycle can be the cause - part 1 finds all optimal paths
+ otherwise.
+ In the cases where part 2 above identifies a negative cycle, the algorithm returns false and
+ no distances or paths are returned. In this implementation the hash table returned is empty.
 
-
-
+ Speeding up Dijkstra:
+ Besides using a Fibonacci heap rather than a binary one, there are other means of getting
+ practical (not asymptotic) speed improvements.
+ One:
+ If we wish to find the distance and path to a particular target vertex, t, we can run
+ dijkstra as before but terminate the moment we extract t from the min-heap. At that point
+ we will already have the optimum distance and path to t.
+ Two:
+ An even better improvement, if we want path, again to a particular target, t, is to do a
+ bi-directional search. You basically do two dijkstra searches, one forward from source, the
+ other backward from target. In each, you extract min once and relax its edges. After doing
+ one, you do one from the other side. You will need two min-heaps, two collections for
+ distances, etc. You keep going until a single vertex, w, has been removed from both heaps.
+ Then the shortest path is that from source to w plus the best from target to w.
+ Warning: its possible that w is not on the shortest path; a simple correction is used for
+   for this, it involves a final check that a better middle vertex does not exist.
+ Three:
+ Using Potential Functions to modify the weight along the edges. Important that what was the
+ shortest path to all destinations remains the same after applying the function, you merely
+ want to shift the weights around. If this is done correctly, Dijkstra will be guided, as it
+ were, towards the target (assuming function captures real knowledge or good guesswork of
+ what movements would be more profitable). Algorithm could then terminate as soon as target
+ is found. Related to this is the use of "landmarks", vertices that the path must go through.
+ You know you must go through landmark so algorithm can find fastest way from source to it,
+ and from destination to landmark. Example: traveling from Maine to Huston, landmark being
+ some place in the middle of the US that any good path must go through.
 */
 
 
@@ -86,17 +137,6 @@
 /*                         */
 /*    Heap for Dijkstra    */
 /*                         */
-
-// DELETE ME AFTER
-static void _print_heap(graph_vertex **heap_array, hashTable *paths, int heap_size)
-{
-  for (int i = 0; i < heap_size; i++) {
-    graph_vertex *vertex = heap_array[i];
-    int id = vertex->id;
-    int distance = hashTableSearchNode(paths, &id, keyConvertFromInt)->value;
-    printf("id: %d, dist: %d\tmem: %p\n", id, distance, (void *)vertex);
-  }
-}
 
 static
 int _parent_pos(int vertex)
@@ -243,16 +283,21 @@ bool _relax_edge(int alt_path, adjacencyListNode_t *edge, hashTable **forest)
 
 void singleSourceShortestPath_print(hashTable *paths, int dest)
 {
-  if (hashTableSearchNode(paths, &dest, keyConvertFromInt)->value == INT_MAX) {
-    printf("Destination vertex is not reachable from source.\n"); return;
+  if (hashTableIsEmpty(paths)) {
+    printf("A negative weighted cycle exists in the graph.");
+    printf(" Distances are undefined!\n");
   }
-
-  int parent = hashTableSearchNode(paths, &dest, keyConvertFromInt)->graph_predecessor;
-  if (parent == -1) {
-    printf("%d ", dest);
-  } else {
-    singleSourceShortestPath_print(paths, parent);
-    printf("%d ", dest);
+  else if (hashTableSearchNode(paths, &dest, keyConvertFromInt)->value == INT_MAX) {
+    printf("Destination vertex is not reachable from source.\n");
+  }
+  else {
+    int parent = hashTableSearchNode(paths, &dest, keyConvertFromInt)->graph_predecessor;
+    if (parent == -1) {
+      printf("%d ", dest);
+    } else {
+      singleSourceShortestPath_print(paths, parent);
+      printf("%d ", dest);
+    }
   }
 }
 
@@ -306,6 +351,44 @@ hashTable* singleSourceShortestPath_dijkstra(graph_t *graph, graph_vertex *sourc
       }
       edge = edge->next;
     }
+  }
+  return paths;
+}
+
+
+/*                      */
+/*     Bellman-Ford     */
+/*                      */
+
+hashTable* singleSourceShortestPath_bellmanFord(graph_t *graph, graph_vertex *source)
+{
+  hashTable *paths = _single_source_initialize(graph, source);
+
+  // relax all edges in graph as many times as there are vertices in graph (minus 1)
+  for (size_t i = 0; i < graph->numVertex - 1; i++) {
+    graph_vertex *vertex = graph->vertex_head;
+    while (vertex) {
+      adjacencyListNode_t *edge = graph->list[vertex->id];
+      while (edge) {
+	_relax_edge(vertex->id, edge, &paths);
+	edge = edge->next;
+      }
+      vertex = vertex->next;
+    }
+  }
+  // identify negative cycles in graph by relaxing all edges again
+  graph_vertex *vertex = graph->vertex_head;
+  while (vertex) {
+    adjacencyListNode_t *edge = graph->list[vertex->id];
+    while (edge) {
+      bool relaxed = _relax_edge(vertex->id, edge, &paths);
+      if (relaxed) {
+	hashTableEmpty(&paths);
+	return paths;
+      }
+      edge = edge->next;
+    }
+    vertex = vertex->next;
   }
   return paths;
 }

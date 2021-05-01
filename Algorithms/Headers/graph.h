@@ -107,12 +107,12 @@ int  graphVertexDegreeIn (graph_t*, graph_vertex*);
 bool vertexReachable     (graph_t*, graph_vertex*, graph_vertex*);
 
 /*            Advanced Analysis   */
-void       printStronglyConnectedComponents (graph_t*);
-hashTable* stronglyConnectedComponents      (graph_t*);
-void       singleSourceShortestPath_print   (hashTable*, int);
-hashTable* singleSourceShortestPath_DAG     (graph_t*, graph_vertex*);
-hashTable* singleSourceShortestPath_dijkstra(graph_t*, graph_vertex*);
-
+void       printStronglyConnectedComponents    (graph_t*);
+hashTable* stronglyConnectedComponents         (graph_t*);
+void       singleSourceShortestPath_print      (hashTable*, int);
+hashTable* singleSourceShortestPath_DAG        (graph_t*, graph_vertex*);
+hashTable* singleSourceShortestPath_dijkstra   (graph_t*, graph_vertex*);
+hashTable* singleSourceShortestPath_bellmanFord(graph_t*, graph_vertex*);
 
 /*            Traversal           */
 hashTable* breadthFirstSearch(graph_t*, graph_vertex*);
@@ -453,6 +453,18 @@ hashTable* singleSourceShortestPath_DAG(graph_t*, graph_vertex*);
  *   graphs, otherwise, use Breadth-First Search to find shortest paths.
  */
 hashTable* singleSourceShortestPath_dijkstra(graph_t*, graph_vertex*);
+
+
+/* Performs a Single-Source Shortest Path analysis in the general case, meaning
+ * the graph may have negative weights and negatively weighted cycles.
+ * @param the graph which to analyze
+ * @param the source vertex that is the single-source of all paths
+ * @return a hash table identical to the described above in the Dijkstra algorithm.
+ *   However, if the graph contains a negatively weighted cycle between the source
+ *   and a reachable destination distances are undefined: the hash table returned 
+ *   is empty. Use hashTableIsEmpty to test for this (returns 1 if empty, else 0).
+ */
+hashTable* singleSourceShortestPath_bellmanFord(graph_t*, graph_vertex*);
 
 
 /* Frees the memory allocated to the graph and all member vertices
